@@ -1,0 +1,35 @@
+# github.com/cespare/xxhash v1.1.0
+github.com/cespare/xxhash
+# github.com/cretz/bine v0.2.0
+## explicit
+# github.com/hlts2/ip-hash v0.0.0-20190314042121-0e4d407f7fb9
+## explicit
+github.com/hlts2/ip-hash
+# github.com/hlts2/least-connections v0.0.0-20190314035037-b1f9b2e9bc9c
+## explicit
+github.com/hlts2/least-connections
+# github.com/hlts2/round-robin v0.0.0-20190314040659-eb24115f39ce
+## explicit
+github.com/hlts2/round-robin
+# github.com/ipsn/go-libtor v1.0.380
+## explicit
+# github.com/kpango/fastime v1.0.8
+github.com/kpango/fastime
+# github.com/kpango/glg v1.2.10
+## explicit
+github.com/kpango/glg
+# github.com/pkg/errors v0.8.1
+## explicit
+github.com/pkg/errors
+# github.com/urfave/cli v1.20.0
+## explicit
+github.com/urfave/cli
+# golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
+## explicit
+# golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+## explicit
+# golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
+## explicit
+# gopkg.in/yaml.v2 v2.2.2
+## explicit
+gopkg.in/yaml.v2

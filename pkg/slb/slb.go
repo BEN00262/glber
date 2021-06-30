@@ -3,12 +3,17 @@ package slb
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"time"
 
+	"github.com/cretz/bine/tor"
+	"github.com/ipsn/go-libtor"
 	"github.com/pkg/errors"
 )
 
@@ -74,25 +79,30 @@ func (s *serverLoadBalancer) Proxy(target *url.URL, w http.ResponseWriter, req *
 }
 
 func (s *serverLoadBalancer) ListenAndServe() error {
-	addr := s.Config.Host + ":" + s.Config.Port
+	// we really dont have any control over this :)
+	// addr := s.Config.Host + ":" + s.Config.Port
 
-	var (
-		ls  net.Listener
-		err error
-	)
+	// var (
+	// 	ls  net.Listener
+	// 	err error
+	// )
 
-	if s.Config.TLSConfig.Enabled {
-		ls, err = createTLSListenter(addr, s.Config.TLSConfig.CertKey, s.Config.TLSConfig.KeyKey)
-		if err != nil {
-			return errors.Wrap(err, "faild to create tls lisner")
-		}
-	} else {
-		ls, err = createListener(addr)
-		if err != nil {
-			return errors.Wrap(err, "faild to create listener")
-		}
+	// we wont handle the tls shit here ( its tor nigga )
+	// if s.Config.TLSConfig.Enabled {
+	// 	ls, err = createTLSListenter(addr, s.Config.TLSConfig.CertKey, s.Config.TLSConfig.KeyKey)
+	// 	if err != nil {
+	// 		return errors.Wrap(err, "faild to create tls lisner")
+	// 	}
+	// } else {
+	// this listener created will be a tor listener
+	ls, err := createListener()
+	if err != nil {
+		return errors.Wrap(err, "faild to create listener")
 	}
 
+	// }
+
+	// inject the tor network here
 	err = s.Server.Serve(ls)
 	if err != nil {
 		return errors.Wrap(err, "faild to serve")
@@ -100,14 +110,34 @@ func (s *serverLoadBalancer) ListenAndServe() error {
 	return nil
 }
 
-func createListener(addr string) (net.Listener, error) {
-	ls, err := net.Listen("tcp", addr)
+// we have created a darkweb thing
+func createListener() (net.Listener, error) {
+	// create the tor listener
+	// Start tor with some defaults + elevated verbosity
+	fmt.Println("Starting and registering onion service, please wait a bit...")
+	t, err := tor.Start(nil, &tor.StartConf{ProcessCreator: libtor.Creator, DebugWriter: os.Stderr})
 	if err != nil {
-		return nil, errors.Wrapf(err, "faild to create lisner, network: tcp, addr: %s", addr)
+		log.Panicf("Failed to start tor: %v", err)
 	}
-	return ls, nil
+	defer t.Close()
+
+	// Wait at most a few minutes to publish the service
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
+	// Create an onion service to listen on any port but show as 80
+	onion, err := t.Listen(ctx, &tor.ListenConf{RemotePorts: []int{80}})
+	if err != nil {
+		log.Panicf("Failed to create onion service: %v", err)
+	}
+	defer onion.Close()
+
+	fmt.Printf("Please open a Tor capable browser and navigate to http://%v.onion\n", onion.ID)
+
+	return onion, nil
 }
 
+// we dont care about this
 func createTLSListenter(addr string, certFile, keyFile string) (net.Listener, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
